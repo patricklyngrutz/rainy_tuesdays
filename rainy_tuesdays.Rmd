@@ -1,40 +1,137 @@
 ---
-title: "It always rains on recycling night"
+title: "NOAA and the Flood"
+subtitle: "Dispelling my own superstition with data"
 author: "Patrick Lyng Rutz"
 date: "6/7/2019"
 output:
   rmarkdown::html_document:
     theme: journal
 ---
-
+-----
+  
 ### It's a vivid memory...
 
-In my college years, 
+It's Tuesday - recycling night in the Heights, Jersey City. One by one, neighbors
+grab the usual bins for cardboard and bottles - dragging them to the curb.
 
+"Wow it's really coming down!"
+
+That's a shame, because by the time the sanitation workers come by they will have
+a soggy mess to contend with. Wait, this happened last week too... talk about *deja vu*!
+  
+<br/>
 <center>
-![This comes to mind](wet_cardb_image.jpg){width=375px}
-</center>
+![This familiar situation](wet_cardb_image.jpg){width=350px}
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+</center><br/>
+
+**"It *always* rains on cardboard night!"**
+  ...this became a sort of mantra between my friends and I some years back. It did seem
+uncanny, to the point where I was ready to believe that we had endured some sort
+of statistical anomaly in our years together.
+
+-----
+  
+### A textbook case of bias
+  
+All humans (and data) suffer from biases. This specific case is something called
+[*Negativity Bias*](https://www.psychologytoday.com/us/articles/200306/our-brains-negative-bias), which means the unpleasant memories of sloshy cardboard seemed to far outweigh/outnumber
+the mundane, dry nights.
+
+As much as I'd love to, it's impossible to turn this cognitive switch on and off.
+I *do* believe that a disproportionate number of recycling nights occurred on rainy
+days!
+
+However, those of us in the analytics profession are equipped to answer things like
+this more definitively. Below, I intend to.
+
+-----
+  
+### NOAA public datasets
+
+The [National Centers for Environment Information](https://www.ncdc.noaa.gov/)
+(part of the National Oceanic and Atmospheric Administration) provide
+the public with various datasets pertaining to climate in the US, gathered
+from a national network of weather stations and other meteorological instruments.
+
+I was able to use the [Find a Station](https://www.ncdc.noaa.gov/cdo-web/datatools/findstation) tool to access
+daily weather summaries for Newark International Airport, which is about 20 minutes
+away and should serve as an accurate location for historical precipitation figures.  
+  
+  
+```{r, include=FALSE}
+# Basic includes for the markdown
+library('dplyr')
+library('readr')
+library('knitr')
+library('kableExtra')
+library('ggplot2')
+library('lubridate')
+```
+<br/>
+*Weather station data example - available as .csv*
+```{r, echo=FALSE}
+# Preview table of the raw NOAA data
+nw %>%
+  #select(1:9) %>%
+  filter(!is.na(WT01) | !is.na(WT02)) %>%
+  head(35) %>%
+  kable() %>%
+  kable_styling(c('condensed'), fixed_thead = T, font_size = 11) %>%
+  scroll_box(height = "200px")
+```
+<br/>
+The NCEI also provides the corresponding  [data definitions](https://www.ncdc.noaa.gov/cdo-web/datasets) for the weather type "WT".
+Here is the direct [link](https://www1.ncdc.noaa.gov/pub/data/cdo/documentation/GHCND_documentation.pdf).  
+
+WT16 is described as *"Rain (may include freezing rain, drizzle, and freezing drizzle)"*
+which sounds like an appropriate description of what we're after.
+
+### The chi-squared test
+
+Let's turn this vague superstition into something testable.
+
+> H~1~: It rains disproportionately on different weekdays.  
+> H~0~: It rains equally across every weekday.
+
+There is a very straightforward approach for this called the [chi-squared Goodness of Fit test](https://stattrek.com/chi-square-test/goodness-of-fit.aspx). This test is only
+used for discrete distributions of categorical variables. This is what WT16 represents,
+a binary classification of rainy weather which we can count in a contingency table.
+
+### Data preparation
+
+This section will explain a few transformations with example code.
+[Skip to the results](#skip_prep).
+
+```{r}
+nw <- readr::read_csv("noaa_newark_data.csv")
+
+seasons <- c(
+  'Mar' = 'Spring', 'Apr' = 'Spring', 'May' = 'Spring',
+  'Jun' = 'Summer', 'Jul' = 'Summer', 'Aug' = 'Summer',
+  'Sep' = 'Autumn', 'Oct' = 'Autumn', 'Nov' = 'Autumn',
+  'Dec' = 'Winter', 'Jan' = 'Winter', 'Feb' = 'Winter'
+)
+
+# Add weekday and season labels
+nw <- nw %>%
+  mutate(Weekday = lubridate::wday(DATE, label = T)) %>%
+  mutate(Season = seasons[lubridate::month(DATE, label = T)]) %>%
+  mutate(Weather = ifelse(is.na(WT16), 'Clear', 'Rain'))
+
+# Contingency table
+ct <- nw %>%
+  group_by(Weekday, Weather, Season) %>%
+  summarize(Count = n())
+
+ct %>%
+  filter(Weather == 'Rain') %>%
+  ggplot(aes(x = Weekday)) +
+  geom_bar(aes(weight = Count))
 ```
 
-## R Markdown
+Test
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+<a name="skip_prep"/>
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Test2
