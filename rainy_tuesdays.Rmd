@@ -69,13 +69,14 @@ library('ggplot2')
 library('lubridate')
 
 theme_rutz <- function () { 
-    theme_bw(base_size=12, base_family="Ubuntu") %+replace% 
+    theme_bw(base_size=13, base_family="Ubuntu") %+replace% 
         theme(
             panel.background  = element_blank(),
-            plot.background = element_rect(fill="gray96", colour=NA), 
+            plot.background = element_rect(fill="transparent", colour=NA), 
             legend.background = element_rect(fill="transparent", colour=NA),
             legend.key = element_rect(fill="transparent", colour=NA),
-            
+            panel.grid.major = element_line(color = 'gray90'),
+            panel.grid.minor = element_line(color=NA)
         )
 }
 
@@ -176,11 +177,11 @@ ct <- nw %>%
 
 Let's have a look!
 
-```{r}
+```{r, echo=FALSE, fig.height=3}
 ct %>%
   filter(Weather == 'Rain') %>%
   ggplot(aes(x = Weekday, fill = Season)) +
-  geom_bar(aes(weight = Count)) +
+  geom_bar(aes(weight = Count), color = 'gray60') +
   coord_flip() +
   labs(
     title = 'Rainy Days',
@@ -188,9 +189,10 @@ ct %>%
     y = '',
     x = ''
   ) +
-  theme_rutz()
-  #theme_joey()
-  #theme_minimal()
+  theme_rutz() +
+  scale_fill_brewer(palette = 'Pastel1', direction = -1) +
+  annotate(geom = 'text', x = 'Tue', y = 25, label = 'Recycling Night', family = 'Ubuntu', size = 6, color = 'white', alpha = .9) +
+  geom_hline(yintercept = 33, linetype = 'dashed', color = 'black')
 ```
 
 Test
