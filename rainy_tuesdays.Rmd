@@ -35,7 +35,7 @@ of statistical anomaly in our years together.
 ### A textbook case of bias
   
 All humans (and data) suffer from biases. This specific case is something called
-[*Negativity Bias*](https://www.psychologytoday.com/us/articles/200306/our-brains-negative-bias), which means the unpleasant memories of sloshy cardboard seemed to far outweigh/outnumber
+[Negativity Bias](https://www.psychologytoday.com/us/articles/200306/our-brains-negative-bias), which means the unpleasant memories of sloshy cardboard seemed to far outweigh/outnumber
 the mundane, dry nights.
 
 As much as I'd love to, it's impossible to turn this cognitive switch on and off.
@@ -67,6 +67,19 @@ library('knitr')
 library('kableExtra')
 library('ggplot2')
 library('lubridate')
+
+theme_rutz <- function () { 
+    theme_bw(base_size=12, base_family="Ubuntu") %+replace% 
+        theme(
+            panel.background  = element_blank(),
+            plot.background = element_rect(fill="gray96", colour=NA), 
+            legend.background = element_rect(fill="transparent", colour=NA),
+            legend.key = element_rect(fill="transparent", colour=NA),
+            
+        )
+}
+
+nw <- readr::read_csv("noaa_newark_data.csv")
 ```
 <br/>
 *Weather station data example - available as .csv*
@@ -87,6 +100,8 @@ Here is the direct [link](https://www1.ncdc.noaa.gov/pub/data/cdo/documentation/
 WT16 is described as *"Rain (may include freezing rain, drizzle, and freezing drizzle)"*
 which sounds like an appropriate description of what we're after.
 
+-----
+
 ### The chi-squared test
 
 Let's turn this vague superstition into something testable.
@@ -98,14 +113,41 @@ There is a very straightforward approach for this called the [chi-squared Goodne
 used for discrete distributions of categorical variables. This is what WT16 represents,
 a binary classification of rainy weather which we can count in a contingency table.
 
+-----
+
 ### Data preparation
 
-This section will explain a few transformations with example code.
-[Skip to the results](#skip_prep).
+This section will explain a few transformations with example code.  
+<br/>
+**[Click here to skip past the data prep](#skip_prep)**.
+<br/>
+<br/>
 
-```{r}
+The available data is relatively clean, so it is easily imported without
+specifying types by the readr package. As a bonus, the DATE field politely defaults
+to date type.
+
+```{r, warning=FALSE, message=FALSE}
 nw <- readr::read_csv("noaa_newark_data.csv")
 
+# The Date is correct
+str(nw$DATE)
+
+# WT16 (rain) is 1 when true and NA when false
+str(nw$WT16)
+table(nw$WT16, useNA = 'always')
+```
+
+<br/>
+In summary, we need to make the following adjustments:  
+
+  * Clean up WT16 to remove NA's
+  * Add the Weekday (it's part of our hypothesis)
+  * Drop and rename to be friendlier
+  * (optional) Adding a season as available feature
+
+```{r}
+# This will be a lookup table for our calculated season
 seasons <- c(
   'Mar' = 'Spring', 'Apr' = 'Spring', 'May' = 'Spring',
   'Jun' = 'Summer', 'Jul' = 'Summer', 'Aug' = 'Summer',
@@ -113,21 +155,42 @@ seasons <- c(
   'Dec' = 'Winter', 'Jan' = 'Winter', 'Feb' = 'Winter'
 )
 
-# Add weekday and season labels
+# Enriching our initial dataset as described
 nw <- nw %>%
   mutate(Weekday = lubridate::wday(DATE, label = T)) %>%
   mutate(Season = seasons[lubridate::month(DATE, label = T)]) %>%
+  mutate(Season = factor(Season, levels = c('Spring', 'Summer', 'Autumn', 'Winter'))) %>%
   mutate(Weather = ifelse(is.na(WT16), 'Clear', 'Rain'))
+```
+<br/>
+Finally we prep our tidy contingency table for convenience later on.
 
+```{r}
 # Contingency table
 ct <- nw %>%
   group_by(Weekday, Weather, Season) %>%
   summarize(Count = n())
+```
+-----
+### Is Tuesday special?
 
+Let's have a look!
+
+```{r}
 ct %>%
   filter(Weather == 'Rain') %>%
-  ggplot(aes(x = Weekday)) +
-  geom_bar(aes(weight = Count))
+  ggplot(aes(x = Weekday, fill = Season)) +
+  geom_bar(aes(weight = Count)) +
+  coord_flip() +
+  labs(
+    title = 'Rainy Days',
+    subtitle = 'Newark Intl Airport, Jan 2012 thru Jun 2018',
+    y = '',
+    x = ''
+  ) +
+  theme_rutz()
+  #theme_joey()
+  #theme_minimal()
 ```
 
 Test
