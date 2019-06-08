@@ -6,6 +6,8 @@ date: "6/7/2019"
 output:
   rmarkdown::html_document:
     theme: journal
+editor_options: 
+  chunk_output_type: console
 ---
 -----
   
@@ -172,6 +174,7 @@ ct <- nw %>%
   group_by(Weekday, Weather, Season) %>%
   summarize(Count = n())
 ```
+<a name="skip_prep"/>
 -----
 ### Is Tuesday special?
 
@@ -195,8 +198,18 @@ ct %>%
   geom_hline(yintercept = 33, linetype = 'dashed', color = 'black')
 ```
 
-Test
+There are certainly more rainy Tuesdays than average, but is this significant?
 
-<a name="skip_prep"/>
-
-Test2
+```{r}
+ct %>%
+  filter(Weather == 'Rain') %>%
+  group_by(Weekday) %>%
+  summarize(Count = sum(Count)) %>%
+  .$Count %>%
+  chisq.test()
+```
+<br/><br/>
+Well, there you have it. This is a resounding ***"No"***. I can't reject the null hypothesis, meaning that the evidence doesn't substantiate a claim otherwise. Our p-value of .29 is much
+higher than the standard .05 threshold.
+  
+Coming to a conclusion, it's fair to admit we don't have the bandwidth (or self-awareness) to methodically list and prove out everything our gut has been deciding for us over the years. This was a toy example, but when the stakes are higher I hope this writeup serves as a gentle reminder to **not** trust your instincts. I know I can't!
