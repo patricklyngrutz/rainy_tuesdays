@@ -1,6 +1,6 @@
 ---
-title: "NOAA and the Flood"
-subtitle: "Dispelling my own superstition with data"
+title: "It Always Rains on Recycling Night"
+subtitle: "Overcoming negativity bias with data"
 author: "Patrick Lyng Rutz"
 date: "6/7/2019"
 output:
@@ -19,7 +19,7 @@ grab the usual bins for cardboard and bottles - dragging them to the curb.
 "Wow it's really coming down!"
 
 That's a shame, because by the time the sanitation workers come by they will have
-a soggy mess to contend with. Wait, this happened last week too... talk about *deja vu*!
+a soggy mess to contend with. Wait, this happened last week too... *deja vu*!
   
 <br/>
 <center>
@@ -27,7 +27,7 @@ a soggy mess to contend with. Wait, this happened last week too... talk about *d
 
 </center><br/>
 
-**"It *always* rains on cardboard night!"**
+**"It *always* rains on recycling night!"**
   ...this became a sort of mantra between my friends and I some years back. It did seem
 uncanny, to the point where I was ready to believe that we had endured some sort
 of statistical anomaly in our years together.
@@ -54,7 +54,7 @@ this more definitively. Below, I intend to.
 The [National Centers for Environment Information](https://www.ncdc.noaa.gov/)
 (part of the National Oceanic and Atmospheric Administration) provide
 the public with various datasets pertaining to climate in the US, gathered
-from a national network of weather stations and other meteorological instruments.
+from a national network of weather stations.
 
 I was able to use the [Find a Station](https://www.ncdc.noaa.gov/cdo-web/datatools/findstation) tool to access
 daily weather summaries for Newark International Airport, which is about 20 minutes
@@ -112,9 +112,13 @@ Let's turn this vague superstition into something testable.
 > H~1~: It rains disproportionately on different weekdays.  
 > H~0~: It rains equally across every weekday.
 
-There is a very straightforward approach for this called the [chi-squared Goodness of Fit test](https://stattrek.com/chi-square-test/goodness-of-fit.aspx). This test is only
-used for discrete distributions of categorical variables. This is what WT16 represents,
-a binary classification of rainy weather which we can count in a contingency table.
+There is a straightforward approach for this called the [chi-squared Goodness of Fit test](https://stattrek.com/chi-square-test/goodness-of-fit.aspx), otherwise known as
+the test of homogeneity. This is different than than more common test of independence
+(also referred to as chi squared). Either test requires discrete distributions of categorical variables. This is what WT16 represents, a binary classification of rainy weather which we can count in a contingency table.
+
+We will test the probability that the true population of rainy days is equal across
+all weekdays. Put plainly, we assume that proportionately each weekday will have 14.3%
+of the total rainy days.
 
 -----
 
@@ -148,6 +152,7 @@ In summary, we need to make the following adjustments:
   * Add the Weekday (it's part of our hypothesis)
   * Drop and rename to be friendlier
   * (optional) Adding a season as available feature
+<br/>
 
 ```{r}
 # This will be a lookup table for our calculated season
